@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>消したい黒い岩 | Black Stone</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#120e0a">
+  <meta name="description" content="投げ捨てるだけのアプリ">
+
+  <!-- iOS PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="黒い岩">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Settings floating trigger button -->
+    <button id="settings-trigger" aria-label="Settings">
+      <svg class="settings-icon-svg" viewBox="0 0 24 24">
+        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+      </svg>
+    </button>
+
+    <!-- UI hints/labels overlaid on canvas -->
+    <div id="drawing-hint">岩になぞって書いて　ダブルタップで投げる</div>
+    <div id="first-hint">さわってみて</div>
+    <div id="support-banner">🌿 福祉の相談ができます → そよぎHP</div>
+
+    <!-- Settings Overlay View -->
+    <div id="settings-overlay" class="overlay">
+      <div class="settings-header">
+        <button class="close-btn" id="settings-close" aria-label="Close Settings">&times;</button>
+      </div>
+      <div class="settings-list">
+        <!-- Language Select -->
+        <div class="setting-row">
+          <span class="setting-label" id="lbl-lang">言語</span>
+          <div class="chip-group">
+            <button class="chip" id="btn-lang-ja">🇯🇵 日本語</button>
+            <button class="chip" id="btn-lang-en">🌐 English</button>
+          </div>
+        </div>
+
+        <!-- Sound Toggle -->
+        <div class="setting-row-group">
+          <div class="setting-row">
+            <span class="setting-label" id="lbl-sound">音</span>
+            <label class="switch">
+              <input type="checkbox" id="chk-sound">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <!-- Sound Volume Select (visible if sound enabled) -->
+          <div class="setting-row" id="volume-row" style="margin-top: 16px; display: none;">
+            <span class="setting-label" style="font-size: 14px; color: #9e9e9e;" id="lbl-volume">音量</span>
+            <div class="chip-group">
+              <button class="chip" id="btn-vol-0">小さく</button>
+              <button class="chip" id="btn-vol-1">ふつう</button>
+              <button class="chip" id="btn-vol-2">おおきく</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vibration Toggle -->
+        <div class="setting-row">
+          <span class="setting-label" id="lbl-vibration">振動</span>
+          <label class="switch">
+            <input type="checkbox" id="chk-vibration">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Drawing Mode Toggle -->
+        <div class="setting-row-group">
+          <div class="setting-row">
+            <span class="setting-label" id="lbl-drawing">落書きモード</span>
+            <label class="switch">
+              <input type="checkbox" id="chk-drawing">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-hint" id="hint-drawing">触れるとすぐに滑り出す</div>
+        </div>
+
+        <!-- Purification Effect Select -->
+        <div class="setting-row-group">
+          <div class="setting-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+            <span class="setting-label" style="color: #9e9e9e; font-size: 14px;" id="lbl-effect">浄化演出</span>
+            <div class="chip-group" style="width: 100%;">
+              <button class="chip" id="btn-purify-1">✨ 浄化</button>
+              <button class="chip" id="btn-purify-0">💥 爆発</button>
+              <button class="chip" id="btn-purify-2">🔥 大爆発</button>
+            </div>
+          </div>
+          <div class="setting-hint" id="hint-effect">岩が沈んだあとの浄化演出を選べます</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Soyogi Footer Branding -->
+        <div class="soyogi-section">
+          <div class="soyogi-title" id="lbl-soyogi-about">🌿 そよぎについて</div>
+          <div class="soyogi-desc" id="lbl-soyogi-desc">介護と支援の相談どころ そよぎ</div>
+          <button class="soyogi-link" id="btn-soyogi-url">🌐 そよぎ ホームページ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rest Popup Overlay -->
+    <div id="rest-overlay" class="overlay modal-overlay">
+      <div class="modal-content" id="rest-active-content">
+        <div class="modal-text-1" id="rest-txt-1">Playing for a long time may be a burden.</div>
+        <div class="modal-text-2" id="rest-txt-2">Why not take a break?</div>
+        <div class="modal-buttons" id="rest-buttons">
+          <button class="btn-main" id="btn-rest-yes">Yes, let's take a break</button>
+          <button class="btn-secondary" id="btn-rest-no">No, I'm fine</button>
+        </div>
+      </div>
+      <!-- Goodbye text displayed after picking 'Yes' -->
+      <div class="modal-content" id="rest-exit-content" style="display: none;">
+        <div class="modal-text-1" style="opacity: 1; transform: none;">Please take a good rest.</div>
+      </div>
+    </div>
+
+    <!-- Shelter Popup Overlay -->
+    <div id="shelter-overlay" class="overlay modal-overlay">
+      <div class="modal-content">
+        <div class="modal-text-1" id="shelter-txt-1">そんなに連続で投げてお疲れになりませんか？</div>
+        
+        <!-- Japanese Text Block -->
+        <div class="modal-text-2" id="shelter-txt-2-ja">もしもあなたが辛くて辛くてどうしようもないという状況であれば、とても静かなメタバース空間デジタルシェルターそよぎにいらしてみませんか？</div>
+        
+        <!-- English Hotline Block -->
+        <div class="hotline-block" id="shelter-hotline-en" style="display: none;">
+          <div class="hotline-desc">If you've been going through a very difficult time, why not try talking to a trusted friend, family member, or one of these hotlines?</div>
+          <div class="hotline-row"><span>🇺🇸 US</span><span class="hotline-num">988 <span class="hotline-note">Call or Text</span></span></div>
+          <div class="hotline-row"><span>🇬🇧 UK</span><span class="hotline-num">116 123</span></div>
+          <div class="hotline-row"><span>🇨🇦 Canada</span><span class="hotline-num">988 <span class="hotline-note">Call or Text</span></span></div>
+          <div class="hotline-row"><span>🇦🇺 Australia</span><span class="hotline-num">13 11 14</span></div>
+          <div class="hotline-row"><span>🇳🇿 New Zealand</span><span class="hotline-num">1737</span></div>
+          <div class="hotline-row"><span>🇮🇪 Ireland</span><span class="hotline-num">116 123</span></div>
+        </div>
+
+        <div class="modal-buttons" id="shelter-buttons">
+          <button class="btn-main" id="btn-shelter-yes">🔥 シェルターに行ってみる</button>
+          <button class="btn-secondary" id="btn-shelter-no">今はいかない</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Service Worker registration (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .catch((err) => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
