@@ -2350,11 +2350,9 @@ document.getElementById('settings-close').addEventListener('click', () => {
 });
 
 // External consult link click
-document.getElementById('btn-soyogi-url').addEventListener('click', () => {
-  window.open('https://soyogi.hp.peraichi.com/top', '_blank');
-});
+// btn-soyogi-url は <a target="_blank"> に変更したのでJSハンドラ不要
 document.getElementById('support-banner').addEventListener('click', () => {
-  window.open('https://soyogi.hp.peraichi.com/shelter', '_blank');
+  window.open('https://soyogi.hp.peraichi.com/shelter', '_blank', 'noopener');
 });
 
 // --- Popup Manager ---

@@ -225,6 +225,7 @@ input:checked + .slider:before {
 }
 
 .soyogi-link {
+  display: inline-block;
   color: #90caf9;
   font-size: 12px;
   text-decoration: underline;
@@ -233,6 +234,7 @@ input:checked + .slider:before {
   border: none;
   font-family: inherit;
   text-align: left;
+  padding: 4px 0;
 }
 
 /* Floating settings button on screen */
