@@ -1,4 +1,9 @@
 {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjMzMzkzMTUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg2RGYyOTIyRjc4OUVmMTFmNjk3NDREMEZkYWZCNDhmN2VhNjRmYTExIn0",
+    "payload": "eyJkb21haW4iOiJibGFjay1zdG9uZS13ZWIudmVyY2VsLmFwcCJ9",
+    "signature": "cC9zO8y4iOvq7Q/xsNd3j5rcb+MCadRUyvYVauAfuPZlf+LzuLqhTu3dOtSPxqsrj2L3Dnr0+f44Hh574zw5ORw="
+  },
   "miniapp": {
     "version": "1",
     "name": "Black Stone",
