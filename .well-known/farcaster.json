@@ -1,0 +1,19 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "Black Stone",
+    "iconUrl": "https://maimmaim20230728-blip.github.io/black-stone-web/icons/icon-512.png",
+    "homeUrl": "https://maimmaim20230728-blip.github.io/black-stone-web/",
+    "imageUrl": "https://maimmaim20230728-blip.github.io/black-stone-web/icons/farcaster-embed.png",
+    "buttonTitle": "🪨 Throw / 投げる",
+    "splashImageUrl": "https://maimmaim20230728-blip.github.io/black-stone-web/icons/icon-512.png",
+    "splashBackgroundColor": "#120e0a",
+    "primaryCategory": "health-fitness",
+    "tags": [
+      "wellness",
+      "calm",
+      "stressrelief",
+      "soyogi"
+    ]
+  }
+}
