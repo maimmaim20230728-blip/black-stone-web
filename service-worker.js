@@ -1,5 +1,5 @@
-// 消したい黒い岩 - Service Worker
-const CACHE_VERSION = 'v4';
+﻿// 消したい黒い岩 - Service Worker
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `black-stone-${CACHE_VERSION}`;
 
 const CORE_ASSETS = [

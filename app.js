@@ -735,7 +735,7 @@ function slideCurve(t) {
 }
 
 // --- Trigger state actions ---
-// 落書きを投げる（ダブルタップと「なげる」ボタンの共通処理）
+// 落書きを投げる（「なげる」ボタン専用。ダブルタップは廃止・2026-07-15）
 function throwDrawing() {
   if (!drawingMode || phase !== 'waiting') return;
   vibrateTap();
@@ -2135,10 +2135,8 @@ function handleInteractionTap(x, y) {
   lastTap = now;
   
   if (diff < 250) {
-    // Double tap triggers in drawing mode
-    if (drawingMode && phase === 'waiting') {
-      throwDrawing();
-    }
+    // 落書きモードのダブルタップ投擲は廃止（2026-07-15 代表判断:
+    // 濁点「゛」を打つ2連タップが投擲と誤判定されるため。投擲は「なげる」ボタンのみ）
   } else {
     // Single tap triggers slide in normal mode
     if (!drawingMode && isOnStone(x, y)) {
@@ -2234,7 +2232,7 @@ function isRtlLang(code) {
 const kStrings = {
   ja: {
     'app.title': '黒い石',
-    'stone.drawHint': '岩になぞって書いて　ダブルタップで投げる',
+    'stone.drawHint': '岩になぞって書いて　「なげる」ボタンで投げる',
     'stone.throw': 'なげる',
     'stone.consult': '🌿 福祉の相談ができます → そよぎHP',
     'stone.firstHint': 'さわってみて',
@@ -2242,7 +2240,7 @@ const kStrings = {
     'settings.sound': '音',
     'settings.vibration': '振動',
     'settings.drawingMode': '落書きモード',
-    'settings.drawingOn': '岩になぞって書いて、ダブルタップで投げる',
+    'settings.drawingOn': '岩になぞって書いて、「なげる」ボタンで投げる',
     'settings.drawingOff': '触れるとすぐに滑り出す',
     'settings.effectDesc': '岩が沈んだあとの浄化演出を選べます',
     'settings.aboutTitle': '🌿 そよぎについて',
@@ -2263,7 +2261,7 @@ const kStrings = {
   },
   en: {
     'app.title': 'Black Stone',
-    'stone.drawHint': 'Trace on the stone to draw, then double-tap to throw',
+    'stone.drawHint': 'Trace on the stone to draw, then tap the Throw button',
     'stone.throw': 'Throw',
     'stone.consult': '🌿 Consultation for support & care -> Soyogi HP',
     'stone.firstHint': 'Try touching',
@@ -2271,7 +2269,7 @@ const kStrings = {
     'settings.sound': 'Sound',
     'settings.vibration': 'Vibration',
     'settings.drawingMode': 'Drawing Mode',
-    'settings.drawingOn': 'Draw on the stone and double-tap to throw',
+    'settings.drawingOn': 'Draw on the stone and throw with the Throw button',
     'settings.drawingOff': 'Touch to let it slide away',
     'settings.effectDesc': 'Choose the effect after the stone sinks',
     'settings.aboutTitle': '🌿 About Soyogi',
@@ -2293,7 +2291,7 @@ const kStrings = {
   },
   ar: {
     'app.title': 'الحجر الداكن',
-    'stone.drawHint': 'ارسم على الحجر ثم انقر نقرًا مزدوجًا لرميه',
+    'stone.drawHint': 'ارسم على الحجر ثم اضغط زر «ارمِ» لرميه',
     'stone.throw': 'ارمِ',
     'stone.consult': '🌿 استشارات الرعاية والدعم ← موقع Soyogi',
     'stone.firstHint': 'جرّب أن تلمسه',
@@ -2301,7 +2299,7 @@ const kStrings = {
     'settings.sound': 'الصوت',
     'settings.vibration': 'الاهتزاز',
     'settings.drawingMode': 'وضع الرسم',
-    'settings.drawingOn': 'ارسم على الحجر وانقر نقرًا مزدوجًا لرميه',
+    'settings.drawingOn': 'ارسم على الحجر واضغط زر «ارمِ» لرميه',
     'settings.drawingOff': 'عند اللمس ينزلق فورًا',
     'settings.effectDesc': 'اختر التأثير بعد غرق الحجر',
     'settings.aboutTitle': '🌿 عن Soyogi',
@@ -2323,7 +2321,7 @@ const kStrings = {
   },
   bn: {
     'app.title': 'কালো পাথর',
-    'stone.drawHint': 'পাথরের উপর আঙুলে লিখুন, তারপর ডাবল ট্যাপ করে ছুড়ে দিন',
+    'stone.drawHint': 'পাথরের উপর আঙুলে লিখুন, তারপর "ছুড়ে দিন" বোতাম টিপুন',
     'stone.throw': 'ছুড়ে দিন',
     'stone.consult': '🌿 যত্ন ও সহায়তার পরামর্শ → Soyogi ওয়েবসাইট',
     'stone.firstHint': 'ছুঁয়ে দেখুন',
@@ -2331,7 +2329,7 @@ const kStrings = {
     'settings.sound': 'শব্দ',
     'settings.vibration': 'কম্পন',
     'settings.drawingMode': 'আঁকার মোড',
-    'settings.drawingOn': 'পাথরে আঁকুন, ডাবল ট্যাপ করে ছুড়ে দিন',
+    'settings.drawingOn': 'পাথরে আঁকুন, "ছুড়ে দিন" বোতাম টিপুন',
     'settings.drawingOff': 'ছুঁলেই সাথে সাথে গড়িয়ে যায়',
     'settings.effectDesc': 'পাথর ডুবে যাওয়ার পরের এফেক্ট বেছে নিন',
     'settings.aboutTitle': '🌿 Soyogi সম্পর্কে',
@@ -2353,7 +2351,7 @@ const kStrings = {
   },
   de: {
     'app.title': 'Schwarzer Stein',
-    'stone.drawHint': 'Zeichne auf den Stein und wirf ihn mit Doppeltipp',
+    'stone.drawHint': 'Zeichne auf den Stein und wirf ihn mit der Taste „Werfen“',
     'stone.throw': 'Werfen',
     'stone.consult': '🌿 Beratung zu Pflege & Unterstützung → Soyogi',
     'stone.firstHint': 'Berühre den Stein',
@@ -2361,7 +2359,7 @@ const kStrings = {
     'settings.sound': 'Ton',
     'settings.vibration': 'Vibration',
     'settings.drawingMode': 'Kritzelmodus',
-    'settings.drawingOn': 'Auf den Stein zeichnen und mit Doppeltipp werfen',
+    'settings.drawingOn': 'Auf den Stein zeichnen und mit der Taste „Werfen“ werfen',
     'settings.drawingOff': 'Beim Berühren gleitet er sofort davon',
     'settings.effectDesc': 'Wähle den Effekt, nachdem der Stein versinkt',
     'settings.aboutTitle': '🌿 Über Soyogi',
@@ -2383,7 +2381,7 @@ const kStrings = {
   },
   es: {
     'app.title': 'Piedra Negra',
-    'stone.drawHint': 'Dibuja sobre la piedra y lánzala con doble toque',
+    'stone.drawHint': 'Dibuja sobre la piedra y lánzala con el botón «Lanzar»',
     'stone.throw': 'Lanzar',
     'stone.consult': '🌿 Consultas de cuidado y apoyo → Soyogi',
     'stone.firstHint': 'Prueba a tocarla',
@@ -2391,7 +2389,7 @@ const kStrings = {
     'settings.sound': 'Sonido',
     'settings.vibration': 'Vibración',
     'settings.drawingMode': 'Modo dibujo',
-    'settings.drawingOn': 'Dibuja sobre la piedra y lánzala con doble toque',
+    'settings.drawingOn': 'Dibuja sobre la piedra y lánzala con el botón «Lanzar»',
     'settings.drawingOff': 'Al tocarla, se desliza enseguida',
     'settings.effectDesc': 'Elige el efecto tras hundirse la piedra',
     'settings.aboutTitle': '🌿 Sobre Soyogi',
@@ -2413,7 +2411,7 @@ const kStrings = {
   },
   fr: {
     'app.title': 'Pierre Noire',
-    'stone.drawHint': "Dessine sur la pierre, puis lance-la d'un double tap",
+    'stone.drawHint': "Dessine sur la pierre, puis lance-la avec le bouton « Lancer »",
     'stone.throw': 'Lancer',
     'stone.consult': '🌿 Conseils en soin et soutien → Soyogi',
     'stone.firstHint': 'Essaie de la toucher',
@@ -2421,7 +2419,7 @@ const kStrings = {
     'settings.sound': 'Son',
     'settings.vibration': 'Vibration',
     'settings.drawingMode': 'Mode dessin',
-    'settings.drawingOn': "Dessine sur la pierre et lance-la d'un double tap",
+    'settings.drawingOn': "Dessine sur la pierre et lance-la avec le bouton « Lancer »",
     'settings.drawingOff': 'Au toucher, elle glisse aussitôt',
     'settings.effectDesc': "Choisis l'effet après que la pierre a coulé",
     'settings.aboutTitle': '🌿 À propos de Soyogi',
@@ -2443,7 +2441,7 @@ const kStrings = {
   },
   hi: {
     'app.title': 'काला पत्थर',
-    'stone.drawHint': 'पत्थर पर उँगली से लिखिए, फिर दो बार टैप करके फेंकिए',
+    'stone.drawHint': 'पत्थर पर उँगली से लिखिए, फिर "फेंकें" बटन से फेंकिए',
     'stone.throw': 'फेंकें',
     'stone.consult': '🌿 देखभाल और सहायता की सलाह → Soyogi वेबसाइट',
     'stone.firstHint': 'छूकर देखिए',
@@ -2451,7 +2449,7 @@ const kStrings = {
     'settings.sound': 'ध्वनि',
     'settings.vibration': 'कंपन',
     'settings.drawingMode': 'चित्र मोड',
-    'settings.drawingOn': 'पत्थर पर लिखिए और दो बार टैप करके फेंकिए',
+    'settings.drawingOn': 'पत्थर पर लिखिए और "फेंकें" बटन से फेंकिए',
     'settings.drawingOff': 'छूते ही यह तुरंत फिसल जाता है',
     'settings.effectDesc': 'पत्थर डूबने के बाद का प्रभाव चुनिए',
     'settings.aboutTitle': '🌿 Soyogi के बारे में',
@@ -2473,7 +2471,7 @@ const kStrings = {
   },
   id: {
     'app.title': 'Batu Hitam',
-    'stone.drawHint': 'Coret-coret di batu, lalu ketuk dua kali untuk melempar',
+    'stone.drawHint': 'Coret-coret di batu, lalu tekan tombol "Lempar"',
     'stone.throw': 'Lempar',
     'stone.consult': '🌿 Konsultasi perawatan & dukungan → Situs Soyogi',
     'stone.firstHint': 'Coba sentuh',
@@ -2481,7 +2479,7 @@ const kStrings = {
     'settings.sound': 'Suara',
     'settings.vibration': 'Getaran',
     'settings.drawingMode': 'Mode corat-coret',
-    'settings.drawingOn': 'Gambar di batu, lalu ketuk dua kali untuk melempar',
+    'settings.drawingOn': 'Gambar di batu, lalu tekan tombol "Lempar"',
     'settings.drawingOff': 'Saat disentuh, batu langsung meluncur',
     'settings.effectDesc': 'Pilih efek setelah batu tenggelam',
     'settings.aboutTitle': '🌿 Tentang Soyogi',
@@ -2503,7 +2501,7 @@ const kStrings = {
   },
   it: {
     'app.title': 'Pietra Nera',
-    'stone.drawHint': 'Disegna sulla pietra e lanciala con un doppio tocco',
+    'stone.drawHint': 'Disegna sulla pietra e lanciala con il pulsante «Lancia»',
     'stone.throw': 'Lancia',
     'stone.consult': '🌿 Consulenza su cura e sostegno → Soyogi',
     'stone.firstHint': 'Prova a toccarla',
@@ -2511,7 +2509,7 @@ const kStrings = {
     'settings.sound': 'Suono',
     'settings.vibration': 'Vibrazione',
     'settings.drawingMode': 'Modalità disegno',
-    'settings.drawingOn': 'Disegna sulla pietra e lanciala con un doppio tocco',
+    'settings.drawingOn': 'Disegna sulla pietra e lanciala con il pulsante «Lancia»',
     'settings.drawingOff': 'Al tocco scivola subito via',
     'settings.effectDesc': "Scegli l'effetto dopo che la pietra affonda",
     'settings.aboutTitle': '🌿 Su Soyogi',
@@ -2533,7 +2531,7 @@ const kStrings = {
   },
   ko: {
     'app.title': '검은 돌',
-    'stone.drawHint': '돌에 손가락으로 그리고, 두 번 탭해서 던지세요',
+    'stone.drawHint': '돌에 손가락으로 그리고, 「던지기」 버튼으로 던지세요',
     'stone.throw': '던지기',
     'stone.consult': '🌿 돌봄과 지원 상담 → Soyogi 홈페이지',
     'stone.firstHint': '살짝 만져 보세요',
@@ -2541,7 +2539,7 @@ const kStrings = {
     'settings.sound': '소리',
     'settings.vibration': '진동',
     'settings.drawingMode': '낙서 모드',
-    'settings.drawingOn': '돌에 그림을 그리고 두 번 탭해서 던지기',
+    'settings.drawingOn': '돌에 그림을 그리고 「던지기」 버튼으로 던지기',
     'settings.drawingOff': '건드리면 바로 미끄러져 내려가요',
     'settings.effectDesc': '돌이 가라앉은 뒤의 정화 연출을 고를 수 있어요',
     'settings.aboutTitle': '🌿 Soyogi 소개',
@@ -2563,7 +2561,7 @@ const kStrings = {
   },
   pt: {
     'app.title': 'Pedra Negra',
-    'stone.drawHint': 'Desenhe na pedra e lance com um toque duplo',
+    'stone.drawHint': 'Desenhe na pedra e lance com o botão "Lançar"',
     'stone.throw': 'Lançar',
     'stone.consult': '🌿 Consultas de cuidado e apoio → Soyogi',
     'stone.firstHint': 'Experimente tocar',
@@ -2571,7 +2569,7 @@ const kStrings = {
     'settings.sound': 'Som',
     'settings.vibration': 'Vibração',
     'settings.drawingMode': 'Modo desenho',
-    'settings.drawingOn': 'Desenhe na pedra e lance com um toque duplo',
+    'settings.drawingOn': 'Desenhe na pedra e lance com o botão "Lançar"',
     'settings.drawingOff': 'Ao tocar, ela desliza logo',
     'settings.effectDesc': 'Escolha o efeito depois que a pedra afundar',
     'settings.aboutTitle': '🌿 Sobre a Soyogi',
@@ -2593,7 +2591,7 @@ const kStrings = {
   },
   ru: {
     'app.title': 'Чёрный камень',
-    'stone.drawHint': 'Нарисуй на камне и брось его двойным касанием',
+    'stone.drawHint': 'Нарисуй на камне и брось его кнопкой «Бросить»',
     'stone.throw': 'Бросить',
     'stone.consult': '🌿 Консультации по уходу и поддержке → Soyogi',
     'stone.firstHint': 'Попробуй прикоснуться',
@@ -2601,7 +2599,7 @@ const kStrings = {
     'settings.sound': 'Звук',
     'settings.vibration': 'Вибрация',
     'settings.drawingMode': 'Режим рисования',
-    'settings.drawingOn': 'Нарисуй на камне и брось его двойным касанием',
+    'settings.drawingOn': 'Нарисуй на камне и брось его кнопкой «Бросить»',
     'settings.drawingOff': 'От прикосновения камень сразу катится',
     'settings.effectDesc': 'Выбери эффект после погружения камня',
     'settings.aboutTitle': '🌿 О Soyogi',
@@ -2623,7 +2621,7 @@ const kStrings = {
   },
   zh: {
     'app.title': '黑色石头',
-    'stone.drawHint': '在石头上写写画画，双击把它扔出去',
+    'stone.drawHint': '在石头上写写画画，点「扔出去」按钮扔出去',
     'stone.throw': '扔出去',
     'stone.consult': '🌿 可以咨询照护与支援 → Soyogi 主页',
     'stone.firstHint': '碰碰看',
@@ -2631,7 +2629,7 @@ const kStrings = {
     'settings.sound': '声音',
     'settings.vibration': '振动',
     'settings.drawingMode': '涂鸦模式',
-    'settings.drawingOn': '在石头上写画，双击扔出去',
+    'settings.drawingOn': '在石头上写画，点「扔出去」按钮扔出去',
     'settings.drawingOff': '一碰就立刻滑走',
     'settings.effectDesc': '选择石头沉下去之后的净化效果',
     'settings.aboutTitle': '🌿 关于 Soyogi',
@@ -2889,7 +2887,7 @@ document.getElementById('btn-shelter-no').addEventListener('click', () => {
   startForming();
 });
 
-// 落書きモードの「なげる」ボタン（ダブルタップの代替・共存）
+// 落書きモードの「なげる」ボタン（投擲の唯一の手段）
 document.getElementById('throw-btn').addEventListener('click', throwDrawing);
 
 // --- Startup Initialization ---

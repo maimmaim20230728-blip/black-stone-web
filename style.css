@@ -291,10 +291,11 @@ input:checked + .slider:before {
   display: none;
 }
 
-/* Drawing mode "throw" button（半透明・控えめ・タップ領域48px以上） */
+/* Drawing mode "throw" button（半透明・控えめ・タップ領域48px以上）
+   位置は落書きの邪魔にならない下部寄り（そよぎリンクとは重ねない） */
 .throw-btn {
   position: absolute;
-  bottom: 92px;
+  bottom: 48px;
   left: 50%;
   transform: translateX(-50%);
   min-width: 96px;
