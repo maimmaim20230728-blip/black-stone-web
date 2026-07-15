@@ -619,7 +619,8 @@ function vibrateBigExplosion() { vibrate([220, 40, 220, 55, 160, 65, 120, 80, 80
 let phase = 'forming'; // 'forming', 'waiting', 'sliding', 'splashing', 'settling', 'popup'
 let dropCount = 0;
 const throwTimes = [];
-let showFirstHint = false;
+let showFirstHint = false; // 初回起動セッションのみ true（ヒント表示レイヤーを保持）
+let firstThrown = false;   // 初回の1投で true → ヒントをフェードアウト
 
 let screenW = 0;
 let screenH = 0;
@@ -734,7 +735,25 @@ function slideCurve(t) {
 }
 
 // --- Trigger state actions ---
+// 落書きを投げる（ダブルタップと「なげる」ボタンの共通処理）
+function throwDrawing() {
+  if (!drawingMode || phase !== 'waiting') return;
+  vibrateTap();
+  if (currentStroke.length > 1) {
+    strokes.push([...currentStroke]);
+  }
+  currentStroke = [];
+  startSliding();
+}
+
 function startSliding() {
+  // 初回ヒントは最初の1投でフェードアウト（時間では消さない）
+  if (showFirstHint && !firstThrown) {
+    firstThrown = true;
+    const hintEl = document.getElementById('first-hint');
+    if (hintEl) hintEl.style.opacity = '0';
+    saveSetting(STORAGE_KEYS.firstLaunch, 'false');
+  }
   throwTimes.push(Date.now());
   if (throwTimes.length > 50) {
     throwTimes.shift();
@@ -1799,7 +1818,11 @@ function updateDrawVariables() {
     stoneY = getStoneBaseY() + (getSpringY() - getStoneBaseY()) * slideCurve(slideProgress);
   }
   
-  if (phase === 'waiting' || phase === 'forming') {
+  if (phase === 'waiting') {
+    // 待機中はごく軽く脈動（±1.0%・既存の pulseT を流用）。無機物が呼吸して
+    // 見えると不気味なので、振幅は 1% を超えないこと。
+    stoneScale = formProgress * (1.0 + Math.sin(pulseT * 2.0) * 0.010);
+  } else if (phase === 'forming') {
     stoneScale = formProgress;
   } else if (phase === 'splashing') {
     stoneScale = Math.max(0.0, Math.min(1.0, 0.08 * (1.0 - easeOutCubic(sinkProgress))));
@@ -2019,6 +2042,7 @@ function tick(timestamp) {
   }
   
   paint(ctx);
+  syncDrawingOverlays();
   requestAnimationFrame(tick);
 }
 
@@ -2113,12 +2137,7 @@ function handleInteractionTap(x, y) {
   if (diff < 250) {
     // Double tap triggers in drawing mode
     if (drawingMode && phase === 'waiting') {
-      vibrateTap();
-      if (currentStroke.length > 1) {
-        strokes.push([...currentStroke]);
-      }
-      currentStroke = [];
-      startSliding();
+      throwDrawing();
     }
   } else {
     // Single tap triggers slide in normal mode
@@ -2187,96 +2206,538 @@ canvas.addEventListener('touchend', (e) => {
   }
 });
 
-// --- UI Localizations ---
-const LOCALIZE = {
+// --- UI Localizations（そよぎ標準14言語・Flutter版 i18n.dart から一字一句移植）---
+// 言語メタ情報（コード・ネイティブ表記名・RTLフラグ）。ar のみ RTL。
+const kLangs = [
+  { code: 'ja', native: '日本語',            rtl: false },
+  { code: 'en', native: 'English',           rtl: false },
+  { code: 'ar', native: 'العربية',            rtl: true  },
+  { code: 'bn', native: 'বাংলা',              rtl: false },
+  { code: 'de', native: 'Deutsch',           rtl: false },
+  { code: 'es', native: 'Español',           rtl: false },
+  { code: 'fr', native: 'Français',          rtl: false },
+  { code: 'hi', native: 'हिन्दी',              rtl: false },
+  { code: 'id', native: 'Bahasa Indonesia',  rtl: false },
+  { code: 'it', native: 'Italiano',          rtl: false },
+  { code: 'ko', native: '한국어',             rtl: false },
+  { code: 'pt', native: 'Português',         rtl: false },
+  { code: 'ru', native: 'Русский',           rtl: false },
+  { code: 'zh', native: '中文',               rtl: false }
+];
+
+function isRtlLang(code) {
+  const l = kLangs.find(x => x.code === code);
+  return l ? l.rtl : false;
+}
+
+// 翻訳テーブル（ja=シェルター誘導キーのみ／非ja=ホットラインキーのみ。tr() が en へフォールバック）
+const kStrings = {
   ja: {
-    lblLang: '言語',
-    lblSound: '音',
-    lblVolume: '音量',
-    lblVibration: '振動',
-    lblDrawing: '落書きモード',
-    lblEffect: '浄化演出',
-    hintDrawing: '岩になぞって書いて、ダブルタップで投げる',
-    hintDrawingOff: '触れるとすぐに滑り出す',
-    hintEffect: '岩が沈んだあ後の浄化演出を選べます',
-    btnVol0: '小さく',
-    btnVol1: 'ふつう',
-    btnVol2: 'おおきく',
-    lblAbout: '🌿 そよぎについて',
-    lblDesc: '介護と支援の相談どころ そよぎ',
-    btnUrl: '🌐 そよぎ ホームページ',
-    firstHint: 'さわってみて',
-    drawingHint: '岩になぞって書いて　ダブルタップで投げる',
-    banner: '🌿 福祉の相談ができます → そよぎHP',
-    btnShelterYes: '🔥 シェルターに行ってみる',
-    btnShelterNo: '今はいかない',
-    shelterTxt1: 'そんなに連続で投げてお疲れになりませんか？',
-    shelterTxt2: 'もしもあなたが辛くて辛くてどうしようもないという状況であれば、とても静かなメタバース空間デジタルシェルターそよぎにいらしてみませんか？'
+    'app.title': '黒い石',
+    'stone.drawHint': '岩になぞって書いて　ダブルタップで投げる',
+    'stone.throw': 'なげる',
+    'stone.consult': '🌿 福祉の相談ができます → そよぎHP',
+    'stone.firstHint': 'さわってみて',
+    'settings.language': '言語',
+    'settings.sound': '音',
+    'settings.vibration': '振動',
+    'settings.drawingMode': '落書きモード',
+    'settings.drawingOn': '岩になぞって書いて、ダブルタップで投げる',
+    'settings.drawingOff': '触れるとすぐに滑り出す',
+    'settings.effectDesc': '岩が沈んだあとの浄化演出を選べます',
+    'settings.aboutTitle': '🌿 そよぎについて',
+    'settings.aboutSub': '介護と支援の相談どころ そよぎ',
+    'settings.website': '🌐 そよぎ ホームページ',
+    'settings.effect': '浄化演出',
+    'settings.effectPurify': '浄化',
+    'settings.effectBurst': '爆発',
+    'settings.effectBigBurst': '大爆発',
+    'settings.volume': '音量',
+    'settings.volumeLow': '小さく',
+    'settings.volumeMed': 'ふつう',
+    'settings.volumeHigh': 'おおきく',
+    'shelter.title': 'そんなに連続で投げてお疲れになりませんか？',
+    'shelter.shelterBody': 'もしもあなたが辛くて辛くてどうしようもないという状況であれば、とても静かなメタバース空間デジタルシェルターそよぎにいらしてみませんか？',
+    'shelter.gotoShelter': '🔥 シェルターに行ってみる',
+    'shelter.notNow': '今はいかない'
   },
   en: {
-    lblLang: 'Language',
-    lblSound: 'Sound',
-    lblVolume: 'Volume',
-    lblVibration: 'Vibration',
-    lblDrawing: 'Drawing Mode',
-    lblEffect: 'Effect',
-    hintDrawing: 'Draw on the stone and double-tap to throw',
-    hintDrawingOff: 'Touch to let it slide away',
-    hintEffect: 'Choose the effect after the stone sinks',
-    btnVol0: 'Low',
-    btnVol1: 'Med',
-    btnVol2: 'High',
-    lblAbout: '🌿 About Soyogi',
-    lblDesc: 'Soyogi — Care & Support',
-    btnUrl: '🌐 Soyogi Website (Japanese Only)',
-    firstHint: 'Try touching',
-    drawingHint: 'Trace on the stone to draw, then double-tap to throw',
-    banner: '🌿 Consultation for support & care -> Soyogi HP',
-    btnShelterYes: 'More countries →',
-    btnShelterNo: "I'm okay for now",
-    shelterTxt1: "You've been throwing a lot. Are you doing okay?",
-    shelterTxt2: '' // Hidden in English in favor of Hotline list
+    'app.title': 'Black Stone',
+    'stone.drawHint': 'Trace on the stone to draw, then double-tap to throw',
+    'stone.throw': 'Throw',
+    'stone.consult': '🌿 Consultation for support & care -> Soyogi HP',
+    'stone.firstHint': 'Try touching',
+    'settings.language': 'Language',
+    'settings.sound': 'Sound',
+    'settings.vibration': 'Vibration',
+    'settings.drawingMode': 'Drawing Mode',
+    'settings.drawingOn': 'Draw on the stone and double-tap to throw',
+    'settings.drawingOff': 'Touch to let it slide away',
+    'settings.effectDesc': 'Choose the effect after the stone sinks',
+    'settings.aboutTitle': '🌿 About Soyogi',
+    'settings.aboutSub': 'Soyogi — Care & Support',
+    'settings.website': '🌐 Soyogi Website (Japanese Only)',
+    'settings.effect': 'Effect',
+    'settings.effectPurify': 'Purify',
+    'settings.effectBurst': 'Burst',
+    'settings.effectBigBurst': 'Big Burst',
+    'settings.volume': 'Volume',
+    'settings.volumeLow': 'Low',
+    'settings.volumeMed': 'Med',
+    'settings.volumeHigh': 'High',
+    'shelter.title': "You've been throwing a lot. Are you doing okay?",
+    'shelter.hotlineIntro': "If you've been going through a very difficult time, why not try talking to a trusted friend, family member, or one of these hotlines?",
+    'shelter.restNote': "And it's okay to set this down and rest for a while.",
+    'shelter.moreCountries': 'More countries →',
+    'shelter.imOkay': "I'm okay for now"
+  },
+  ar: {
+    'app.title': 'الحجر الداكن',
+    'stone.drawHint': 'ارسم على الحجر ثم انقر نقرًا مزدوجًا لرميه',
+    'stone.throw': 'ارمِ',
+    'stone.consult': '🌿 استشارات الرعاية والدعم ← موقع Soyogi',
+    'stone.firstHint': 'جرّب أن تلمسه',
+    'settings.language': 'اللغة',
+    'settings.sound': 'الصوت',
+    'settings.vibration': 'الاهتزاز',
+    'settings.drawingMode': 'وضع الرسم',
+    'settings.drawingOn': 'ارسم على الحجر وانقر نقرًا مزدوجًا لرميه',
+    'settings.drawingOff': 'عند اللمس ينزلق فورًا',
+    'settings.effectDesc': 'اختر التأثير بعد غرق الحجر',
+    'settings.aboutTitle': '🌿 عن Soyogi',
+    'settings.aboutSub': 'Soyogi للاستشارات في الرعاية والدعم',
+    'settings.website': '🌐 موقع Soyogi (باليابانية فقط)',
+    'settings.effect': 'التأثير',
+    'settings.effectPurify': 'تطهير',
+    'settings.effectBurst': 'انفجار',
+    'settings.effectBigBurst': 'انفجار كبير',
+    'settings.volume': 'مستوى الصوت',
+    'settings.volumeLow': 'منخفض',
+    'settings.volumeMed': 'متوسط',
+    'settings.volumeHigh': 'مرتفع',
+    'shelter.title': 'لقد رميتَ الكثير من الأحجار. هل أنت بخير؟',
+    'shelter.hotlineIntro': 'إذا كنت تمر بوقت صعب جدًا، لمَ لا تتحدث مع شخص تثق به أو مع أحد خطوط المساعدة هذه؟',
+    'shelter.restNote': 'ولا بأس أن تترك هذا جانبًا وترتاح قليلًا.',
+    'shelter.moreCountries': 'دول أخرى ←',
+    'shelter.imOkay': 'أنا بخير الآن'
+  },
+  bn: {
+    'app.title': 'কালো পাথর',
+    'stone.drawHint': 'পাথরের উপর আঙুলে লিখুন, তারপর ডাবল ট্যাপ করে ছুড়ে দিন',
+    'stone.throw': 'ছুড়ে দিন',
+    'stone.consult': '🌿 যত্ন ও সহায়তার পরামর্শ → Soyogi ওয়েবসাইট',
+    'stone.firstHint': 'ছুঁয়ে দেখুন',
+    'settings.language': 'ভাষা',
+    'settings.sound': 'শব্দ',
+    'settings.vibration': 'কম্পন',
+    'settings.drawingMode': 'আঁকার মোড',
+    'settings.drawingOn': 'পাথরে আঁকুন, ডাবল ট্যাপ করে ছুড়ে দিন',
+    'settings.drawingOff': 'ছুঁলেই সাথে সাথে গড়িয়ে যায়',
+    'settings.effectDesc': 'পাথর ডুবে যাওয়ার পরের এফেক্ট বেছে নিন',
+    'settings.aboutTitle': '🌿 Soyogi সম্পর্কে',
+    'settings.aboutSub': 'যত্ন ও সহায়তা পরামর্শ কেন্দ্র Soyogi',
+    'settings.website': '🌐 Soyogi ওয়েবসাইট (শুধু জাপানি ভাষায়)',
+    'settings.effect': 'এফেক্ট',
+    'settings.effectPurify': 'শুদ্ধি',
+    'settings.effectBurst': 'বিস্ফোরণ',
+    'settings.effectBigBurst': 'বড় বিস্ফোরণ',
+    'settings.volume': 'ভলিউম',
+    'settings.volumeLow': 'কম',
+    'settings.volumeMed': 'মাঝারি',
+    'settings.volumeHigh': 'বেশি',
+    'shelter.title': 'আপনি অনেক পাথর ছুড়েছেন। আপনি কি ঠিক আছেন?',
+    'shelter.hotlineIntro': 'যদি খুব কঠিন সময়ের মধ্য দিয়ে যাচ্ছেন, তাহলে বিশ্বাসের কাউকে বা এই হেল্পলাইনগুলোর কোনোটিতে কথা বলে দেখুন না?',
+    'shelter.restNote': 'আর এটা রেখে কিছুক্ষণ বিশ্রাম নিলেও কোনো ক্ষতি নেই।',
+    'shelter.moreCountries': 'আরও দেশ →',
+    'shelter.imOkay': 'এখন আমি ঠিক আছি'
+  },
+  de: {
+    'app.title': 'Schwarzer Stein',
+    'stone.drawHint': 'Zeichne auf den Stein und wirf ihn mit Doppeltipp',
+    'stone.throw': 'Werfen',
+    'stone.consult': '🌿 Beratung zu Pflege & Unterstützung → Soyogi',
+    'stone.firstHint': 'Berühre den Stein',
+    'settings.language': 'Sprache',
+    'settings.sound': 'Ton',
+    'settings.vibration': 'Vibration',
+    'settings.drawingMode': 'Kritzelmodus',
+    'settings.drawingOn': 'Auf den Stein zeichnen und mit Doppeltipp werfen',
+    'settings.drawingOff': 'Beim Berühren gleitet er sofort davon',
+    'settings.effectDesc': 'Wähle den Effekt, nachdem der Stein versinkt',
+    'settings.aboutTitle': '🌿 Über Soyogi',
+    'settings.aboutSub': 'Soyogi – Beratung für Pflege und Unterstützung',
+    'settings.website': '🌐 Soyogi-Website (nur Japanisch)',
+    'settings.effect': 'Effekt',
+    'settings.effectPurify': 'Reinigung',
+    'settings.effectBurst': 'Explosion',
+    'settings.effectBigBurst': 'Große Explosion',
+    'settings.volume': 'Lautstärke',
+    'settings.volumeLow': 'Leise',
+    'settings.volumeMed': 'Mittel',
+    'settings.volumeHigh': 'Laut',
+    'shelter.title': 'Du hast sehr viele Steine geworfen. Geht es dir gut?',
+    'shelter.hotlineIntro': 'Wenn du gerade eine sehr schwere Zeit durchmachst, sprich doch mit einem vertrauten Menschen oder einer dieser Hotlines.',
+    'shelter.restNote': 'Und es ist okay, jetzt eine Pause zu machen.',
+    'shelter.moreCountries': 'Weitere Länder →',
+    'shelter.imOkay': 'Mir geht es gerade okay'
+  },
+  es: {
+    'app.title': 'Piedra Negra',
+    'stone.drawHint': 'Dibuja sobre la piedra y lánzala con doble toque',
+    'stone.throw': 'Lanzar',
+    'stone.consult': '🌿 Consultas de cuidado y apoyo → Soyogi',
+    'stone.firstHint': 'Prueba a tocarla',
+    'settings.language': 'Idioma',
+    'settings.sound': 'Sonido',
+    'settings.vibration': 'Vibración',
+    'settings.drawingMode': 'Modo dibujo',
+    'settings.drawingOn': 'Dibuja sobre la piedra y lánzala con doble toque',
+    'settings.drawingOff': 'Al tocarla, se desliza enseguida',
+    'settings.effectDesc': 'Elige el efecto tras hundirse la piedra',
+    'settings.aboutTitle': '🌿 Sobre Soyogi',
+    'settings.aboutSub': 'Soyogi: consultas de cuidado y apoyo',
+    'settings.website': '🌐 Sitio web de Soyogi (solo en japonés)',
+    'settings.effect': 'Efecto',
+    'settings.effectPurify': 'Purificación',
+    'settings.effectBurst': 'Explosión',
+    'settings.effectBigBurst': 'Gran explosión',
+    'settings.volume': 'Volumen',
+    'settings.volumeLow': 'Bajo',
+    'settings.volumeMed': 'Medio',
+    'settings.volumeHigh': 'Alto',
+    'shelter.title': 'Has lanzado muchas piedras. ¿Estás bien?',
+    'shelter.hotlineIntro': 'Si estás pasando por un momento muy difícil, ¿por qué no hablas con alguien de confianza o con una de estas líneas de ayuda?',
+    'shelter.restNote': 'Y está bien dejar esto a un lado y descansar un rato.',
+    'shelter.moreCountries': 'Más países →',
+    'shelter.imOkay': 'Por ahora estoy bien'
+  },
+  fr: {
+    'app.title': 'Pierre Noire',
+    'stone.drawHint': "Dessine sur la pierre, puis lance-la d'un double tap",
+    'stone.throw': 'Lancer',
+    'stone.consult': '🌿 Conseils en soin et soutien → Soyogi',
+    'stone.firstHint': 'Essaie de la toucher',
+    'settings.language': 'Langue',
+    'settings.sound': 'Son',
+    'settings.vibration': 'Vibration',
+    'settings.drawingMode': 'Mode dessin',
+    'settings.drawingOn': "Dessine sur la pierre et lance-la d'un double tap",
+    'settings.drawingOff': 'Au toucher, elle glisse aussitôt',
+    'settings.effectDesc': "Choisis l'effet après que la pierre a coulé",
+    'settings.aboutTitle': '🌿 À propos de Soyogi',
+    'settings.aboutSub': 'Soyogi – Conseils en soin et soutien',
+    'settings.website': '🌐 Site web de Soyogi (en japonais)',
+    'settings.effect': 'Effet',
+    'settings.effectPurify': 'Purification',
+    'settings.effectBurst': 'Explosion',
+    'settings.effectBigBurst': 'Grande explosion',
+    'settings.volume': 'Volume',
+    'settings.volumeLow': 'Faible',
+    'settings.volumeMed': 'Moyen',
+    'settings.volumeHigh': 'Fort',
+    'shelter.title': 'Tu as lancé beaucoup de pierres. Ça va ?',
+    'shelter.hotlineIntro': "Si tu traverses une période très difficile, pourquoi ne pas en parler à une personne de confiance ou à l'une de ces lignes d'écoute ?",
+    'shelter.restNote': "Et c'est normal de poser tout ça et de te reposer un peu.",
+    'shelter.moreCountries': 'Autres pays →',
+    'shelter.imOkay': "Ça va pour l'instant"
+  },
+  hi: {
+    'app.title': 'काला पत्थर',
+    'stone.drawHint': 'पत्थर पर उँगली से लिखिए, फिर दो बार टैप करके फेंकिए',
+    'stone.throw': 'फेंकें',
+    'stone.consult': '🌿 देखभाल और सहायता की सलाह → Soyogi वेबसाइट',
+    'stone.firstHint': 'छूकर देखिए',
+    'settings.language': 'भाषा',
+    'settings.sound': 'ध्वनि',
+    'settings.vibration': 'कंपन',
+    'settings.drawingMode': 'चित्र मोड',
+    'settings.drawingOn': 'पत्थर पर लिखिए और दो बार टैप करके फेंकिए',
+    'settings.drawingOff': 'छूते ही यह तुरंत फिसल जाता है',
+    'settings.effectDesc': 'पत्थर डूबने के बाद का प्रभाव चुनिए',
+    'settings.aboutTitle': '🌿 Soyogi के बारे में',
+    'settings.aboutSub': 'देखभाल और सहायता परामर्श केंद्र Soyogi',
+    'settings.website': '🌐 Soyogi वेबसाइट (केवल जापानी में)',
+    'settings.effect': 'प्रभाव',
+    'settings.effectPurify': 'शुद्धि',
+    'settings.effectBurst': 'विस्फोट',
+    'settings.effectBigBurst': 'महाविस्फोट',
+    'settings.volume': 'आवाज़',
+    'settings.volumeLow': 'धीमी',
+    'settings.volumeMed': 'मध्यम',
+    'settings.volumeHigh': 'तेज़',
+    'shelter.title': 'आपने बहुत सारे पत्थर फेंके हैं। क्या आप ठीक हैं?',
+    'shelter.hotlineIntro': 'अगर आप बहुत कठिन समय से गुज़र रहे हैं, तो किसी भरोसेमंद व्यक्ति से या इनमें से किसी हेल्पलाइन पर बात कर लीजिए।',
+    'shelter.restNote': 'और इसे थोड़ी देर छोड़कर आराम करना भी ठीक है।',
+    'shelter.moreCountries': 'और देश →',
+    'shelter.imOkay': 'अभी मैं ठीक हूँ'
+  },
+  id: {
+    'app.title': 'Batu Hitam',
+    'stone.drawHint': 'Coret-coret di batu, lalu ketuk dua kali untuk melempar',
+    'stone.throw': 'Lempar',
+    'stone.consult': '🌿 Konsultasi perawatan & dukungan → Situs Soyogi',
+    'stone.firstHint': 'Coba sentuh',
+    'settings.language': 'Bahasa',
+    'settings.sound': 'Suara',
+    'settings.vibration': 'Getaran',
+    'settings.drawingMode': 'Mode corat-coret',
+    'settings.drawingOn': 'Gambar di batu, lalu ketuk dua kali untuk melempar',
+    'settings.drawingOff': 'Saat disentuh, batu langsung meluncur',
+    'settings.effectDesc': 'Pilih efek setelah batu tenggelam',
+    'settings.aboutTitle': '🌿 Tentang Soyogi',
+    'settings.aboutSub': 'Soyogi – Konsultasi perawatan dan dukungan',
+    'settings.website': '🌐 Situs Soyogi (hanya bahasa Jepang)',
+    'settings.effect': 'Efek',
+    'settings.effectPurify': 'Pemurnian',
+    'settings.effectBurst': 'Ledakan',
+    'settings.effectBigBurst': 'Ledakan besar',
+    'settings.volume': 'Volume',
+    'settings.volumeLow': 'Pelan',
+    'settings.volumeMed': 'Sedang',
+    'settings.volumeHigh': 'Keras',
+    'shelter.title': 'Kamu sudah melempar banyak batu. Kamu baik-baik saja?',
+    'shelter.hotlineIntro': 'Kalau kamu sedang melewati masa yang sangat berat, coba bicara dengan orang yang kamu percaya atau salah satu hotline berikut ini.',
+    'shelter.restNote': 'Dan tidak apa-apa meletakkan ini dulu dan beristirahat sejenak.',
+    'shelter.moreCountries': 'Negara lain →',
+    'shelter.imOkay': 'Untuk saat ini aku baik-baik saja'
+  },
+  it: {
+    'app.title': 'Pietra Nera',
+    'stone.drawHint': 'Disegna sulla pietra e lanciala con un doppio tocco',
+    'stone.throw': 'Lancia',
+    'stone.consult': '🌿 Consulenza su cura e sostegno → Soyogi',
+    'stone.firstHint': 'Prova a toccarla',
+    'settings.language': 'Lingua',
+    'settings.sound': 'Suono',
+    'settings.vibration': 'Vibrazione',
+    'settings.drawingMode': 'Modalità disegno',
+    'settings.drawingOn': 'Disegna sulla pietra e lanciala con un doppio tocco',
+    'settings.drawingOff': 'Al tocco scivola subito via',
+    'settings.effectDesc': "Scegli l'effetto dopo che la pietra affonda",
+    'settings.aboutTitle': '🌿 Su Soyogi',
+    'settings.aboutSub': 'Soyogi – Consulenza su cura e sostegno',
+    'settings.website': '🌐 Sito web di Soyogi (solo in giapponese)',
+    'settings.effect': 'Effetto',
+    'settings.effectPurify': 'Purificazione',
+    'settings.effectBurst': 'Esplosione',
+    'settings.effectBigBurst': 'Grande esplosione',
+    'settings.volume': 'Volume',
+    'settings.volumeLow': 'Basso',
+    'settings.volumeMed': 'Medio',
+    'settings.volumeHigh': 'Alto',
+    'shelter.title': 'Hai lanciato molte pietre. Stai bene?',
+    'shelter.hotlineIntro': 'Se stai attraversando un momento molto difficile, perché non parlarne con una persona di fiducia o con una di queste linee di ascolto?',
+    'shelter.restNote': "E va bene anche mettere giù tutto e riposarti un po'.",
+    'shelter.moreCountries': 'Altri paesi →',
+    'shelter.imOkay': 'Per ora sto bene'
+  },
+  ko: {
+    'app.title': '검은 돌',
+    'stone.drawHint': '돌에 손가락으로 그리고, 두 번 탭해서 던지세요',
+    'stone.throw': '던지기',
+    'stone.consult': '🌿 돌봄과 지원 상담 → Soyogi 홈페이지',
+    'stone.firstHint': '살짝 만져 보세요',
+    'settings.language': '언어',
+    'settings.sound': '소리',
+    'settings.vibration': '진동',
+    'settings.drawingMode': '낙서 모드',
+    'settings.drawingOn': '돌에 그림을 그리고 두 번 탭해서 던지기',
+    'settings.drawingOff': '건드리면 바로 미끄러져 내려가요',
+    'settings.effectDesc': '돌이 가라앉은 뒤의 정화 연출을 고를 수 있어요',
+    'settings.aboutTitle': '🌿 Soyogi 소개',
+    'settings.aboutSub': '돌봄과 지원 상담소 Soyogi',
+    'settings.website': '🌐 Soyogi 홈페이지 (일본어)',
+    'settings.effect': '정화 연출',
+    'settings.effectPurify': '정화',
+    'settings.effectBurst': '폭발',
+    'settings.effectBigBurst': '대폭발',
+    'settings.volume': '음량',
+    'settings.volumeLow': '작게',
+    'settings.volumeMed': '보통',
+    'settings.volumeHigh': '크게',
+    'shelter.title': '돌을 많이 던지고 있네요. 괜찮으신가요?',
+    'shelter.hotlineIntro': '지금 너무 힘든 시간을 보내고 있다면, 믿을 수 있는 사람이나 이런 상담 전화에 이야기해 보는 건 어떨까요?',
+    'shelter.restNote': '잠시 내려놓고 쉬어도 괜찮아요.',
+    'shelter.moreCountries': '다른 나라 →',
+    'shelter.imOkay': '지금은 괜찮아요'
+  },
+  pt: {
+    'app.title': 'Pedra Negra',
+    'stone.drawHint': 'Desenhe na pedra e lance com um toque duplo',
+    'stone.throw': 'Lançar',
+    'stone.consult': '🌿 Consultas de cuidado e apoio → Soyogi',
+    'stone.firstHint': 'Experimente tocar',
+    'settings.language': 'Idioma',
+    'settings.sound': 'Som',
+    'settings.vibration': 'Vibração',
+    'settings.drawingMode': 'Modo desenho',
+    'settings.drawingOn': 'Desenhe na pedra e lance com um toque duplo',
+    'settings.drawingOff': 'Ao tocar, ela desliza logo',
+    'settings.effectDesc': 'Escolha o efeito depois que a pedra afundar',
+    'settings.aboutTitle': '🌿 Sobre a Soyogi',
+    'settings.aboutSub': 'Soyogi – Consultas de cuidado e apoio',
+    'settings.website': '🌐 Site da Soyogi (somente em japonês)',
+    'settings.effect': 'Efeito',
+    'settings.effectPurify': 'Purificação',
+    'settings.effectBurst': 'Explosão',
+    'settings.effectBigBurst': 'Grande explosão',
+    'settings.volume': 'Volume',
+    'settings.volumeLow': 'Baixo',
+    'settings.volumeMed': 'Médio',
+    'settings.volumeHigh': 'Alto',
+    'shelter.title': 'Você lançou muitas pedras. Você está bem?',
+    'shelter.hotlineIntro': 'Se você está passando por um momento muito difícil, que tal conversar com alguém de confiança ou com uma destas linhas de apoio?',
+    'shelter.restNote': 'E tudo bem deixar isso de lado e descansar um pouco.',
+    'shelter.moreCountries': 'Mais países →',
+    'shelter.imOkay': 'Por enquanto estou bem'
+  },
+  ru: {
+    'app.title': 'Чёрный камень',
+    'stone.drawHint': 'Нарисуй на камне и брось его двойным касанием',
+    'stone.throw': 'Бросить',
+    'stone.consult': '🌿 Консультации по уходу и поддержке → Soyogi',
+    'stone.firstHint': 'Попробуй прикоснуться',
+    'settings.language': 'Язык',
+    'settings.sound': 'Звук',
+    'settings.vibration': 'Вибрация',
+    'settings.drawingMode': 'Режим рисования',
+    'settings.drawingOn': 'Нарисуй на камне и брось его двойным касанием',
+    'settings.drawingOff': 'От прикосновения камень сразу катится',
+    'settings.effectDesc': 'Выбери эффект после погружения камня',
+    'settings.aboutTitle': '🌿 О Soyogi',
+    'settings.aboutSub': 'Soyogi – консультации по уходу и поддержке',
+    'settings.website': '🌐 Сайт Soyogi (только на японском)',
+    'settings.effect': 'Эффект',
+    'settings.effectPurify': 'Очищение',
+    'settings.effectBurst': 'Взрыв',
+    'settings.effectBigBurst': 'Большой взрыв',
+    'settings.volume': 'Громкость',
+    'settings.volumeLow': 'Тихо',
+    'settings.volumeMed': 'Средне',
+    'settings.volumeHigh': 'Громко',
+    'shelter.title': 'Ты бросаешь камни один за другим. Всё в порядке?',
+    'shelter.hotlineIntro': 'Если тебе сейчас очень тяжело, поговори с близким человеком или позвони на одну из этих линий помощи.',
+    'shelter.restNote': 'И это нормально: отложить всё и немного отдохнуть.',
+    'shelter.moreCountries': 'Другие страны →',
+    'shelter.imOkay': 'Сейчас всё в порядке'
+  },
+  zh: {
+    'app.title': '黑色石头',
+    'stone.drawHint': '在石头上写写画画，双击把它扔出去',
+    'stone.throw': '扔出去',
+    'stone.consult': '🌿 可以咨询照护与支援 → Soyogi 主页',
+    'stone.firstHint': '碰碰看',
+    'settings.language': '语言',
+    'settings.sound': '声音',
+    'settings.vibration': '振动',
+    'settings.drawingMode': '涂鸦模式',
+    'settings.drawingOn': '在石头上写画，双击扔出去',
+    'settings.drawingOff': '一碰就立刻滑走',
+    'settings.effectDesc': '选择石头沉下去之后的净化效果',
+    'settings.aboutTitle': '🌿 关于 Soyogi',
+    'settings.aboutSub': '照护与支援咨询处 Soyogi',
+    'settings.website': '🌐 Soyogi 主页（仅日语）',
+    'settings.effect': '净化效果',
+    'settings.effectPurify': '净化',
+    'settings.effectBurst': '爆炸',
+    'settings.effectBigBurst': '大爆炸',
+    'settings.volume': '音量',
+    'settings.volumeLow': '小声',
+    'settings.volumeMed': '适中',
+    'settings.volumeHigh': '大声',
+    'shelter.title': '你扔了好多石头。还好吗？',
+    'shelter.hotlineIntro': '如果你正经历特别难熬的时刻，要不要和信任的人聊聊，或拨打下面这些热线？',
+    'shelter.restNote': '把它放下，休息一会儿也没关系。',
+    'shelter.moreCountries': '更多国家 →',
+    'shelter.imOkay': '我现在还好'
   }
 };
 
+// 現在言語でキーを引く。無ければ en → キー名の順にフォールバック。
+function tr(key) {
+  const cur = kStrings[lang];
+  if (cur && cur[key] != null) return cur[key];
+  const en = kStrings['en'][key];
+  if (en != null) return en;
+  return key;
+}
+
+// 言語チップ（14言語）を動的生成。既存の JP/EN 2択を置き換える。
+const langChips = {};
+(function buildLangChips() {
+  const group = document.getElementById('lang-chip-group');
+  if (!group) return;
+  kLangs.forEach((l) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip';
+    btn.textContent = l.native;
+    btn.addEventListener('click', () => {
+      lang = l.code;
+      saveSetting(STORAGE_KEYS.lang, lang);
+      updateLocalization();
+      updateSettingsUI();
+    });
+    langChips[l.code] = btn;
+    group.appendChild(btn);
+  });
+})();
+
 function updateLocalization() {
-  const dictionary = LOCALIZE[lang];
-  document.getElementById('lbl-lang').innerText = dictionary.lblLang;
-  document.getElementById('lbl-sound').innerText = dictionary.lblSound;
-  document.getElementById('lbl-volume').innerText = dictionary.lblVolume;
-  document.getElementById('lbl-vibration').innerText = dictionary.lblVibration;
-  document.getElementById('lbl-drawing').innerText = dictionary.lblDrawing;
-  document.getElementById('lbl-effect').innerText = dictionary.lblEffect;
-  document.getElementById('hint-drawing').innerText = drawingMode ? dictionary.hintDrawing : dictionary.hintDrawingOff;
-  document.getElementById('hint-effect').innerText = dictionary.hintEffect;
-  
-  document.getElementById('btn-vol-0').innerText = dictionary.btnVol0;
-  document.getElementById('btn-vol-1').innerText = dictionary.btnVol1;
-  document.getElementById('btn-vol-2').innerText = dictionary.btnVol2;
-  
-  document.getElementById('lbl-soyogi-about').innerText = dictionary.lblAbout;
-  document.getElementById('lbl-soyogi-desc').innerText = dictionary.lblDesc;
-  document.getElementById('btn-soyogi-url').innerText = dictionary.btnUrl;
-  
-  document.getElementById('first-hint').innerText = dictionary.firstHint;
-  document.getElementById('drawing-hint').innerText = dictionary.drawingHint;
-  document.getElementById('support-banner').innerText = dictionary.banner;
-  
-  // Shelter localization
-  document.getElementById('shelter-txt-1').innerText = dictionary.shelterTxt1;
-  document.getElementById('btn-shelter-yes').innerText = dictionary.btnShelterYes;
-  document.getElementById('btn-shelter-no').innerText = dictionary.btnShelterNo;
-  
-  if (lang === 'ja') {
+  const isJa = lang === 'ja';
+
+  document.getElementById('lbl-lang').textContent = tr('settings.language');
+  document.getElementById('lbl-sound').textContent = tr('settings.sound');
+  document.getElementById('lbl-volume').textContent = tr('settings.volume');
+  document.getElementById('lbl-vibration').textContent = tr('settings.vibration');
+  document.getElementById('lbl-drawing').textContent = tr('settings.drawingMode');
+  document.getElementById('lbl-effect').textContent = tr('settings.effect');
+  document.getElementById('hint-drawing').textContent = drawingMode ? tr('settings.drawingOn') : tr('settings.drawingOff');
+  document.getElementById('hint-effect').textContent = tr('settings.effectDesc');
+
+  document.getElementById('btn-vol-0').textContent = tr('settings.volumeLow');
+  document.getElementById('btn-vol-1').textContent = tr('settings.volumeMed');
+  document.getElementById('btn-vol-2').textContent = tr('settings.volumeHigh');
+
+  // 浄化演出チップ（Flutter版に合わせて絵文字＋訳語をローカライズ）
+  document.getElementById('btn-purify-1').textContent = '✨ ' + tr('settings.effectPurify');
+  document.getElementById('btn-purify-0').textContent = '💥 ' + tr('settings.effectBurst');
+  document.getElementById('btn-purify-2').textContent = '🔥 ' + tr('settings.effectBigBurst');
+
+  document.getElementById('lbl-soyogi-about').textContent = tr('settings.aboutTitle');
+  document.getElementById('lbl-soyogi-desc').textContent = tr('settings.aboutSub');
+  document.getElementById('btn-soyogi-url').textContent = tr('settings.website');
+
+  document.getElementById('first-hint').textContent = tr('stone.firstHint');
+  document.getElementById('drawing-hint').textContent = tr('stone.drawHint');
+  document.getElementById('support-banner').textContent = tr('stone.consult');
+  document.getElementById('throw-btn').textContent = tr('stone.throw');
+
+  // 連投SOSポップアップ（日本語＝シェルター誘導／非日本語＝ホットライン一覧）
+  document.getElementById('shelter-txt-1').textContent = tr('shelter.title');
+  if (isJa) {
+    document.getElementById('shelter-txt-2-ja').textContent = tr('shelter.shelterBody');
+    document.getElementById('btn-shelter-yes').textContent = tr('shelter.gotoShelter');
+    document.getElementById('btn-shelter-no').textContent = tr('shelter.notNow');
+  } else {
+    document.getElementById('hotline-desc').textContent = tr('shelter.hotlineIntro');
+    document.getElementById('shelter-restnote').textContent = tr('shelter.restNote');
+    document.getElementById('btn-shelter-yes').textContent = tr('shelter.moreCountries');
+    document.getElementById('btn-shelter-no').textContent = tr('shelter.imOkay');
+  }
+
+  if (isJa) {
     document.getElementById('shelter-txt-2-ja').style.display = 'block';
     document.getElementById('shelter-hotline-en').style.display = 'none';
+    document.getElementById('shelter-restnote').style.display = 'none';
   } else {
     document.getElementById('shelter-txt-2-ja').style.display = 'none';
     document.getElementById('shelter-hotline-en').style.display = 'flex';
+    document.getElementById('shelter-restnote').style.display = 'block';
   }
-  
-  // Update HTML lang attribute
+
+  // HTML lang/dir 属性（ar のみ RTL）
   document.documentElement.lang = lang;
+  document.documentElement.dir = isRtlLang(lang) ? 'rtl' : 'ltr';
 }
 
 // --- Sync state UI switches ---
@@ -2289,25 +2750,35 @@ function updateSettingsUI() {
   // Conditionally show volume controls
   document.getElementById('volume-row').style.display = soundEnabled ? 'flex' : 'none';
   
-  // Set chips active state
-  document.getElementById('btn-lang-ja').classList.toggle('active', lang === 'ja');
-  document.getElementById('btn-lang-en').classList.toggle('active', lang === 'en');
-  
+  // Set chips active state（14言語チップ）
+  Object.keys(langChips).forEach((code) => {
+    langChips[code].classList.toggle('active', lang === code);
+  });
+
   document.getElementById('btn-vol-0').classList.toggle('active', soundVolume === 0);
   document.getElementById('btn-vol-1').classList.toggle('active', soundVolume === 1);
   document.getElementById('btn-vol-2').classList.toggle('active', soundVolume === 2);
-  
+
   document.getElementById('btn-purify-0').classList.toggle('active', purificationMode === 0);
   document.getElementById('btn-purify-1').classList.toggle('active', purificationMode === 1);
   document.getElementById('btn-purify-2').classList.toggle('active', purificationMode === 2);
-  
-  // Update hints
-  document.getElementById('drawing-hint').style.display = (drawingMode && phase === 'waiting' && strokes.length === 0 && currentStroke.length === 0) ? 'block' : 'none';
+}
+
+// 落書きモードのオーバーレイ（ヒント／なげるボタン）を毎フレーム同期する。
+// 岩の状態（phase）はtick内で変わるため、更新はtickから毎フレーム呼ぶ。
+const throwBtnEl = document.getElementById('throw-btn');
+const drawingHintEl = document.getElementById('drawing-hint');
+function syncDrawingOverlays() {
+  // ヒント：落書きモード＋待機中＋ストローク0本
+  const showHint = drawingMode && phase === 'waiting' && strokes.length === 0 && currentStroke.length === 0;
+  drawingHintEl.style.display = showHint ? 'block' : 'none';
+  // なげるボタン：落書きモード＋待機中＋ストローク1本以上
+  const showThrow = drawingMode && phase === 'waiting' && (strokes.length > 0 || currentStroke.length > 1);
+  throwBtnEl.style.display = showThrow ? 'flex' : 'none';
 }
 
 // Add listeners to chips and options
-document.getElementById('btn-lang-ja').addEventListener('click', () => { lang = 'ja'; saveSetting(STORAGE_KEYS.lang, lang); updateLocalization(); updateSettingsUI(); });
-document.getElementById('btn-lang-en').addEventListener('click', () => { lang = 'en'; saveSetting(STORAGE_KEYS.lang, lang); updateLocalization(); updateSettingsUI(); });
+// 言語チップ（14言語）は buildLangChips() で動的生成＆リスナー付与済み
 
 document.getElementById('chk-sound').addEventListener('change', (e) => {
   soundEnabled = e.target.checked;
@@ -2357,43 +2828,35 @@ document.getElementById('support-banner').addEventListener('click', () => {
 
 // --- Popup Manager ---
 function showPopupView() {
-  if (lang === 'en') {
-    // Show RestPopup
-    const rest = document.getElementById('rest-overlay');
-    document.getElementById('rest-active-content').style.display = 'flex';
-    document.getElementById('rest-exit-content').style.display = 'none';
-    rest.classList.add('active');
-    
-    // Trigger animations in rest modal elements
-    setTimeout(() => {
-      document.getElementById('rest-txt-1').classList.add('fade-in-up');
-    }, 200);
-    setTimeout(() => {
-      document.getElementById('rest-txt-2').classList.add('fade-in-up');
-    }, 1200);
-    setTimeout(() => {
-      document.getElementById('rest-buttons').classList.add('fade-in-up');
-    }, 2200);
-  } else {
-    // Show ShelterPopup
-    const shelter = document.getElementById('shelter-overlay');
-    shelter.classList.add('active');
-    
-    // Reset classes
-    document.getElementById('shelter-txt-1').classList.remove('fade-in-up');
-    document.getElementById('shelter-txt-2-ja').classList.remove('fade-in-up');
-    document.getElementById('shelter-buttons').classList.remove('fade-in-up');
-    
-    setTimeout(() => {
-      document.getElementById('shelter-txt-1').classList.add('fade-in-up');
-    }, 200);
-    setTimeout(() => {
+  // 連投SOS方針（2026-07-15 代表判断）：
+  //   日本語のみシェルター誘導。日本語以外の全言語はホットライン表示のみ。
+  const isJa = lang === 'ja';
+  const shelter = document.getElementById('shelter-overlay');
+  shelter.classList.add('active');
+
+  // Reset animation classes
+  document.getElementById('shelter-txt-1').classList.remove('fade-in-up');
+  document.getElementById('shelter-txt-2-ja').classList.remove('fade-in-up');
+  document.getElementById('shelter-hotline-en').classList.remove('fade-in-up');
+  document.getElementById('shelter-restnote').classList.remove('fade-in-up');
+  document.getElementById('shelter-buttons').classList.remove('fade-in-up');
+
+  setTimeout(() => {
+    document.getElementById('shelter-txt-1').classList.add('fade-in-up');
+  }, 200);
+  setTimeout(() => {
+    if (isJa) {
+      // 日本語：シェルター誘導本文
       document.getElementById('shelter-txt-2-ja').classList.add('fade-in-up');
-    }, 1200);
-    setTimeout(() => {
-      document.getElementById('shelter-buttons').classList.add('fade-in-up');
-    }, 2200);
-  }
+    } else {
+      // 日本語以外：ホットライン一覧＋休んでいい旨（シェルターリンクは出さない）
+      document.getElementById('shelter-hotline-en').classList.add('fade-in-up');
+      document.getElementById('shelter-restnote').classList.add('fade-in-up');
+    }
+  }, 1200);
+  setTimeout(() => {
+    document.getElementById('shelter-buttons').classList.add('fade-in-up');
+  }, 2200);
 }
 
 // Rest Buttons Listeners
@@ -2426,20 +2889,20 @@ document.getElementById('btn-shelter-no').addEventListener('click', () => {
   startForming();
 });
 
+// 落書きモードの「なげる」ボタン（ダブルタップの代替・共存）
+document.getElementById('throw-btn').addEventListener('click', throwDrawing);
+
 // --- Startup Initialization ---
 updateLocalization();
 updateSettingsUI();
+syncDrawingOverlays();
 startForming();
 
+// 初回ヒント：最初の1投を投げるまで表示し、初投擲でフェードアウト（時間では消さない）
 if (isFirstLaunch) {
   showFirstHint = true;
   const hintEl = document.getElementById('first-hint');
   hintEl.style.opacity = '1';
-  setTimeout(() => {
-    hintEl.style.opacity = '0';
-    showFirstHint = false;
-    saveSetting(STORAGE_KEYS.firstLaunch, 'false');
-  }, 2800);
 }
 
 // Launch loops

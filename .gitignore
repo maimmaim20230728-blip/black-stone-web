@@ -1,0 +1,10 @@
+# 開発用ツール（GitHub Pages公開には不要）
+server.js
+validate.js
+check_deps.js
+check_server.js
+find_browser.js
+screenshot*.bat
+
+# アイコン生成元の素材画像（公開不要）
+icons/*.jpg

@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>消したい黒い岩 | Black Stone</title>
 
-  <!-- Farcaster Mini App 埋め込み（タイムラインで画像＋ボタンのカード・タップで起動） -->
-  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://black-stone-web.vercel.app/icons/farcaster-embed.png","button":{"title":"🪨 Throw / 投げる","action":{"type":"launch_miniapp","name":"Black Stone","url":"https://black-stone-web.vercel.app/","splashImageUrl":"https://black-stone-web.vercel.app/icons/icon-512.png","splashBackgroundColor":"#120e0a"}}}' />
-  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://black-stone-web.vercel.app/icons/farcaster-embed.png","button":{"title":"🪨 Throw / 投げる","action":{"type":"launch_frame","name":"Black Stone","url":"https://black-stone-web.vercel.app/","splashImageUrl":"https://black-stone-web.vercel.app/icons/icon-512.png","splashBackgroundColor":"#120e0a"}}}' />
+  <!-- Farcaster Mini App 埋め込み（タイムラインで画像＋ボタンのカードとして表示・タップで起動） -->
+  <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://maimmaim20230728-blip.github.io/black-stone-web/icons/farcaster-embed.png","button":{"title":"🪨 Throw / 投げる","action":{"type":"launch_miniapp","name":"Black Stone","url":"https://maimmaim20230728-blip.github.io/black-stone-web/","splashImageUrl":"https://maimmaim20230728-blip.github.io/black-stone-web/icons/icon-512.png","splashBackgroundColor":"#120e0a"}}}' />
+  <meta name="fc:frame" content='{"version":"1","imageUrl":"https://maimmaim20230728-blip.github.io/black-stone-web/icons/farcaster-embed.png","button":{"title":"🪨 Throw / 投げる","action":{"type":"launch_frame","name":"Black Stone","url":"https://maimmaim20230728-blip.github.io/black-stone-web/","splashImageUrl":"https://maimmaim20230728-blip.github.io/black-stone-web/icons/icon-512.png","splashBackgroundColor":"#120e0a"}}}' />
 
   <!-- PWA -->
   <link rel="manifest" href="./manifest.json">
@@ -41,6 +41,8 @@
     <!-- UI hints/labels overlaid on canvas -->
     <div id="drawing-hint">岩になぞって書いて　ダブルタップで投げる</div>
     <div id="first-hint">さわってみて</div>
+    <!-- 落書きモードの「なげる」ボタン（ダブルタップが難しい人向け・待機中＋ストローク1本以上で表示） -->
+    <button id="throw-btn" class="throw-btn" aria-label="Throw">なげる</button>
     <div id="support-banner">🌿 福祉の相談ができます → そよぎHP</div>
 
     <!-- Settings Overlay View -->
@@ -49,13 +51,10 @@
         <button class="close-btn" id="settings-close" aria-label="Close Settings">&times;</button>
       </div>
       <div class="settings-list">
-        <!-- Language Select -->
-        <div class="setting-row">
+        <!-- Language Select (14言語・JSで動的生成) -->
+        <div class="setting-row" style="flex-direction: column; align-items: flex-start; gap: 12px;">
           <span class="setting-label" id="lbl-lang">言語</span>
-          <div class="chip-group">
-            <button class="chip" id="btn-lang-ja">🇯🇵 日本語</button>
-            <button class="chip" id="btn-lang-en">🌐 English</button>
-          </div>
+          <div class="chip-group" id="lang-chip-group" style="width: 100%; flex-wrap: wrap;"></div>
         </div>
 
         <!-- Sound Toggle -->
@@ -147,9 +146,9 @@
         <!-- Japanese Text Block -->
         <div class="modal-text-2" id="shelter-txt-2-ja">もしもあなたが辛くて辛くてどうしようもないという状況であれば、とても静かなメタバース空間デジタルシェルターそよぎにいらしてみませんか？</div>
         
-        <!-- English Hotline Block -->
+        <!-- Non-Japanese Hotline Block（日本語以外はシェルター誘導せずホットラインのみ） -->
         <div class="hotline-block" id="shelter-hotline-en" style="display: none;">
-          <div class="hotline-desc">If you've been going through a very difficult time, why not try talking to a trusted friend, family member, or one of these hotlines?</div>
+          <div class="hotline-desc" id="hotline-desc">If you've been going through a very difficult time, why not try talking to a trusted friend, family member, or one of these hotlines?</div>
           <div class="hotline-row"><span>🇺🇸 US</span><span class="hotline-num">988 <span class="hotline-note">Call or Text</span></span></div>
           <div class="hotline-row"><span>🇬🇧 UK</span><span class="hotline-num">116 123</span></div>
           <div class="hotline-row"><span>🇨🇦 Canada</span><span class="hotline-num">988 <span class="hotline-note">Call or Text</span></span></div>
@@ -157,6 +156,9 @@
           <div class="hotline-row"><span>🇳🇿 New Zealand</span><span class="hotline-num">1737</span></div>
           <div class="hotline-row"><span>🇮🇪 Ireland</span><span class="hotline-num">116 123</span></div>
         </div>
+
+        <!-- Rest note（日本語以外のみ・ホットラインの下に添える） -->
+        <div class="hotline-rest" id="shelter-restnote" style="display: none;"></div>
 
         <div class="modal-buttons" id="shelter-buttons">
           <button class="btn-main" id="btn-shelter-yes">🔥 シェルターに行ってみる</button>
@@ -177,14 +179,15 @@
       });
     }
   </script>
-  <!-- Farcaster Mini App SDK: 埋め込み(iframe/webview)時のみ esm.sh からSDKを読込み ready() 通知。通常ブラウザ/PWAでは読込まず軽さ維持。 -->
+  <!-- Farcaster Mini App SDK: 埋め込み表示(iframe/webview)時のみ esm.sh からSDKを読込み ready() を通知。
+       通常ブラウザ/PWAでは読み込まないので軽さ維持。 -->
   <script type="module">
     (async () => {
       if ((window.self !== window.top) || window.ReactNativeWebView) {
         try {
           const { sdk } = await import("https://esm.sh/@farcaster/miniapp-sdk");
           await sdk.actions.ready();
-        } catch (e) {}
+        } catch (e) { /* Farcaster外では何もしない */ }
       }
     })();
   </script>

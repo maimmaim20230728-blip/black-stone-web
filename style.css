@@ -129,6 +129,7 @@ body {
 .chip-group {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .chip {
@@ -290,6 +291,34 @@ input:checked + .slider:before {
   display: none;
 }
 
+/* Drawing mode "throw" button（半透明・控えめ・タップ領域48px以上） */
+.throw-btn {
+  position: absolute;
+  bottom: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 96px;
+  min-height: 48px;
+  padding: 12px 28px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 24px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  z-index: 6;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.throw-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
 /* Try touching hint text */
 #first-hint {
   position: absolute;
@@ -346,17 +375,32 @@ input:checked + .slider:before {
   transition: opacity 1s ease, transform 1s ease;
 }
 
-/* Hotline block inside English Shelter popup */
+/* Hotline block inside non-Japanese Shelter popup */
 .hotline-block {
   width: 100%;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
   padding: 12px 16px;
-  margin-bottom: 28px;
-  display: flex;
+  margin-bottom: 16px;
   flex-direction: column;
   gap: 6px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 1s ease, transform 1s ease;
+}
+
+/* Rest note under the hotline block (non-Japanese only) */
+.hotline-rest {
+  width: 100%;
+  color: #bdbdbd;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 28px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 1s ease, transform 1s ease;
 }
 
 .hotline-desc {
