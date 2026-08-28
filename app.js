@@ -2821,7 +2821,7 @@ document.getElementById('settings-close').addEventListener('click', () => {
 // External consult link click
 // btn-soyogi-url は <a target="_blank"> に変更したのでJSハンドラ不要
 document.getElementById('support-banner').addEventListener('click', () => {
-  window.open('https://soyogi.hp.peraichi.com/shelter', '_blank', 'noopener');
+  window.open('https://soudansoyogi.com/iriguchi-q8x3n7f2.html', '_blank', 'noopener');
 });
 
 // --- Popup Manager ---
@@ -2876,7 +2876,7 @@ document.getElementById('btn-rest-no').addEventListener('click', () => {
 
 // Shelter Buttons Listeners
 document.getElementById('btn-shelter-yes').addEventListener('click', () => {
-  const url = lang === 'ja' ? 'https://soyogi.hp.peraichi.com/shelter' : 'https://findahelpline.com';
+  const url = lang === 'ja' ? 'https://soudansoyogi.com/iriguchi-q8x3n7f2.html' : 'https://findahelpline.com';
   window.open(url, '_blank');
   document.getElementById('shelter-overlay').classList.remove('active');
   startForming();
