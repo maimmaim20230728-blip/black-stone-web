@@ -239,10 +239,14 @@ input:checked + .slider:before {
 }
 
 /* Floating settings button on screen */
+/* 押せる広さは 56px 四方（48px 以上）。歯車の見た目の位置は今までのまま */
 #settings-trigger {
   position: absolute;
-  bottom: 48px;
-  right: 20px;
+  bottom: 38px;
+  right: 10px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.55);
@@ -267,15 +271,17 @@ input:checked + .slider:before {
   left: 0;
   width: 100%;
   text-align: center;
-  color: #5a5a5a;
-  font-size: 12px;
+  /* 少し明るく・大きく（#5a5a5a/12px → #8e8e8e/14px。背景との比は約4.6:1） */
+  color: #8e8e8e;
+  font-size: 14px;
   text-decoration: underline;
   cursor: pointer;
   z-index: 5;
 }
 
-#support-banner:hover {
-  color: #9e9e9e;
+#support-banner:hover,
+#support-banner:focus-visible {
+  color: #bdbdbd;
 }
 
 /* Drawing mode guide text */
@@ -441,6 +447,10 @@ input:checked + .slider:before {
   transform: translateY(10px);
   transition: opacity 1s ease, transform 1s ease;
 }
+
+/* 連投ポップアップのボタンは、見えきる（.ready）まで押せない */
+#shelter-buttons { pointer-events: none; }
+#shelter-buttons.ready { pointer-events: auto; }
 
 .btn-main {
   width: 100%;

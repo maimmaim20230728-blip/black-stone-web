@@ -747,6 +747,8 @@ function throwDrawing() {
 }
 
 function startSliding() {
+  // 待機中だけ投げる（上へ弾いたときとタップが両方届いても、1回の投げを2回に数えない）
+  if (phase !== 'waiting') return;
   // 初回ヒントは最初の1投でフェードアウト（時間では消さない）
   if (showFirstHint && !firstThrown) {
     firstThrown = true;
@@ -2235,6 +2237,7 @@ const kStrings = {
     'stone.drawHint': '岩になぞって書いて　「なげる」ボタンで投げる',
     'stone.throw': 'なげる',
     'stone.consult': '🌿 福祉の相談ができます → そよぎHP',
+    'stone.settings': '設定',
     'stone.firstHint': 'さわってみて',
     'settings.language': '言語',
     'settings.sound': '音',
@@ -2264,6 +2267,7 @@ const kStrings = {
     'stone.drawHint': 'Trace on the stone to draw, then tap the Throw button',
     'stone.throw': 'Throw',
     'stone.consult': '🌿 Consultation for support & care -> Soyogi HP',
+    'stone.settings': 'Settings',
     'stone.firstHint': 'Try touching',
     'settings.language': 'Language',
     'settings.sound': 'Sound',
@@ -2294,6 +2298,7 @@ const kStrings = {
     'stone.drawHint': 'ارسم على الحجر ثم اضغط زر «ارمِ» لرميه',
     'stone.throw': 'ارمِ',
     'stone.consult': '🌿 استشارات الرعاية والدعم ← موقع Soyogi',
+    'stone.settings': 'الإعدادات',
     'stone.firstHint': 'جرّب أن تلمسه',
     'settings.language': 'اللغة',
     'settings.sound': 'الصوت',
@@ -2324,6 +2329,7 @@ const kStrings = {
     'stone.drawHint': 'পাথরের উপর আঙুলে লিখুন, তারপর "ছুড়ে দিন" বোতাম টিপুন',
     'stone.throw': 'ছুড়ে দিন',
     'stone.consult': '🌿 যত্ন ও সহায়তার পরামর্শ → Soyogi ওয়েবসাইট',
+    'stone.settings': 'সেটিংস',
     'stone.firstHint': 'ছুঁয়ে দেখুন',
     'settings.language': 'ভাষা',
     'settings.sound': 'শব্দ',
@@ -2354,6 +2360,7 @@ const kStrings = {
     'stone.drawHint': 'Zeichne auf den Stein und wirf ihn mit der Taste „Werfen“',
     'stone.throw': 'Werfen',
     'stone.consult': '🌿 Beratung zu Pflege & Unterstützung → Soyogi',
+    'stone.settings': 'Einstellungen',
     'stone.firstHint': 'Berühre den Stein',
     'settings.language': 'Sprache',
     'settings.sound': 'Ton',
@@ -2384,6 +2391,7 @@ const kStrings = {
     'stone.drawHint': 'Dibuja sobre la piedra y lánzala con el botón «Lanzar»',
     'stone.throw': 'Lanzar',
     'stone.consult': '🌿 Consultas de cuidado y apoyo → Soyogi',
+    'stone.settings': 'Ajustes',
     'stone.firstHint': 'Prueba a tocarla',
     'settings.language': 'Idioma',
     'settings.sound': 'Sonido',
@@ -2414,6 +2422,7 @@ const kStrings = {
     'stone.drawHint': "Dessine sur la pierre, puis lance-la avec le bouton « Lancer »",
     'stone.throw': 'Lancer',
     'stone.consult': '🌿 Conseils en soin et soutien → Soyogi',
+    'stone.settings': 'Réglages',
     'stone.firstHint': 'Essaie de la toucher',
     'settings.language': 'Langue',
     'settings.sound': 'Son',
@@ -2444,6 +2453,7 @@ const kStrings = {
     'stone.drawHint': 'पत्थर पर उँगली से लिखिए, फिर "फेंकें" बटन से फेंकिए',
     'stone.throw': 'फेंकें',
     'stone.consult': '🌿 देखभाल और सहायता की सलाह → Soyogi वेबसाइट',
+    'stone.settings': 'सेटिंग्स',
     'stone.firstHint': 'छूकर देखिए',
     'settings.language': 'भाषा',
     'settings.sound': 'ध्वनि',
@@ -2474,6 +2484,7 @@ const kStrings = {
     'stone.drawHint': 'Coret-coret di batu, lalu tekan tombol "Lempar"',
     'stone.throw': 'Lempar',
     'stone.consult': '🌿 Konsultasi perawatan & dukungan → Situs Soyogi',
+    'stone.settings': 'Pengaturan',
     'stone.firstHint': 'Coba sentuh',
     'settings.language': 'Bahasa',
     'settings.sound': 'Suara',
@@ -2504,6 +2515,7 @@ const kStrings = {
     'stone.drawHint': 'Disegna sulla pietra e lanciala con il pulsante «Lancia»',
     'stone.throw': 'Lancia',
     'stone.consult': '🌿 Consulenza su cura e sostegno → Soyogi',
+    'stone.settings': 'Impostazioni',
     'stone.firstHint': 'Prova a toccarla',
     'settings.language': 'Lingua',
     'settings.sound': 'Suono',
@@ -2534,6 +2546,7 @@ const kStrings = {
     'stone.drawHint': '돌에 손가락으로 그리고, 「던지기」 버튼으로 던지세요',
     'stone.throw': '던지기',
     'stone.consult': '🌿 돌봄과 지원 상담 → Soyogi 홈페이지',
+    'stone.settings': '설정',
     'stone.firstHint': '살짝 만져 보세요',
     'settings.language': '언어',
     'settings.sound': '소리',
@@ -2564,6 +2577,7 @@ const kStrings = {
     'stone.drawHint': 'Desenhe na pedra e lance com o botão "Lançar"',
     'stone.throw': 'Lançar',
     'stone.consult': '🌿 Consultas de cuidado e apoio → Soyogi',
+    'stone.settings': 'Configurações',
     'stone.firstHint': 'Experimente tocar',
     'settings.language': 'Idioma',
     'settings.sound': 'Som',
@@ -2594,6 +2608,7 @@ const kStrings = {
     'stone.drawHint': 'Нарисуй на камне и брось его кнопкой «Бросить»',
     'stone.throw': 'Бросить',
     'stone.consult': '🌿 Консультации по уходу и поддержке → Soyogi',
+    'stone.settings': 'Настройки',
     'stone.firstHint': 'Попробуй прикоснуться',
     'settings.language': 'Язык',
     'settings.sound': 'Звук',
@@ -2624,6 +2639,7 @@ const kStrings = {
     'stone.drawHint': '在石头上写写画画，点「扔出去」按钮扔出去',
     'stone.throw': '扔出去',
     'stone.consult': '🌿 可以咨询照护与支援 → Soyogi 主页',
+    'stone.settings': '设置',
     'stone.firstHint': '碰碰看',
     'settings.language': '语言',
     'settings.sound': '声音',
@@ -2709,6 +2725,8 @@ function updateLocalization() {
   document.getElementById('drawing-hint').textContent = tr('stone.drawHint');
   document.getElementById('support-banner').textContent = tr('stone.consult');
   document.getElementById('throw-btn').textContent = tr('stone.throw');
+  // 歯車の読み上げ名（言語に合わせる）
+  document.getElementById('settings-trigger').setAttribute('aria-label', tr('stone.settings'));
 
   // 連投SOSポップアップ（日本語＝シェルター誘導／非日本語＝ホットライン一覧）
   document.getElementById('shelter-txt-1').textContent = tr('shelter.title');
@@ -2823,8 +2841,16 @@ document.getElementById('settings-close').addEventListener('click', () => {
 document.getElementById('support-banner').addEventListener('click', () => {
   window.open('https://soudansoyogi.com/iriguchi-q8x3n7f2.html', '_blank', 'noopener');
 });
+// キーボード・スイッチ操作でも開けるように（Enter / Space）
+document.getElementById('support-banner').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    window.open('https://soudansoyogi.com/iriguchi-q8x3n7f2.html', '_blank', 'noopener');
+  }
+});
 
 // --- Popup Manager ---
+let shelterReadyTimer = null;
 function showPopupView() {
   // 連投SOS方針（2026-07-15 代表判断）：
   //   日本語のみシェルター誘導。日本語以外の全言語はホットライン表示のみ。
@@ -2838,6 +2864,16 @@ function showPopupView() {
   document.getElementById('shelter-hotline-en').classList.remove('fade-in-up');
   document.getElementById('shelter-restnote').classList.remove('fade-in-up');
   document.getElementById('shelter-buttons').classList.remove('fade-in-up');
+  // ボタンは見えきるまで押せない（連打の最中に出るので、見えないうちに閉じたり
+  // シェルターが開いたりしないように）。CSS の .ready と inert の両方で止める。
+  const btns = document.getElementById('shelter-buttons');
+  btns.classList.remove('ready');
+  btns.inert = true;
+  clearTimeout(shelterReadyTimer);
+  shelterReadyTimer = setTimeout(() => {
+    btns.classList.add('ready');
+    btns.inert = false;
+  }, 3200); // 2.2秒後に出はじめ、1秒かけて見えきる
 
   setTimeout(() => {
     document.getElementById('shelter-txt-1').classList.add('fade-in-up');
