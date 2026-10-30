@@ -2838,14 +2838,15 @@ document.getElementById('settings-close').addEventListener('click', () => {
 
 // External consult link click
 // btn-soyogi-url は <a target="_blank"> に変更したのでJSハンドラ不要
+// 行き先はそよぎHPのトップ（シェルターの入口へ直接は飛ばさない）
 document.getElementById('support-banner').addEventListener('click', () => {
-  window.open('https://soudansoyogi.com/iriguchi-q8x3n7f2.html', '_blank', 'noopener');
+  window.open('https://soudansoyogi.com/', '_blank', 'noopener');
 });
 // キーボード・スイッチ操作でも開けるように（Enter / Space）
 document.getElementById('support-banner').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault();
-    window.open('https://soudansoyogi.com/iriguchi-q8x3n7f2.html', '_blank', 'noopener');
+    window.open('https://soudansoyogi.com/', '_blank', 'noopener');
   }
 });
 
